@@ -1,8 +1,8 @@
+import { PrismaClient, Role } from "@prisma/client";
 import { Request, Response, Router } from "express";
 
 import { BadRequestError } from "../errors/bad-request-error";
 import { Password } from "../services/password";
-import { PrismaClient } from "@prisma/client";
 import { body } from "express-validator";
 import { validateRequest } from "../middlewares/validate-request";
 
@@ -19,6 +19,9 @@ router.put(
   validateRequest,
   async (req: Request, res: Response) => {
     const { username, password, role } = req.body;
+
+    // validate the role
+    if (!(role in Role)) throw new BadRequestError("Invalid role");
 
     const existingAdmin = await prisma.admin.findUnique({
       where: {
