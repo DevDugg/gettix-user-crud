@@ -9,11 +9,11 @@ import { validateRequest } from "../middlewares/validate-request";
 const router = Router();
 const prisma = new PrismaClient();
 
-router.post(
-  "/api/admin/create",
+router.put(
+  "/api/admin/update",
   [
     body("username", "Username is required").notEmpty(),
-    body("password", "Password is required").trim().isLength({ min: 8, max: 20 }),
+    body("password", "Password must be between 8 and 20 characters").trim().isLength({ min: 8, max: 20 }),
     body("role", "Role is required").notEmpty(),
   ],
   validateRequest,
@@ -34,17 +34,14 @@ router.post(
     });
 
     // // throw error if exists
-    if (existingAdmin) throw new BadRequestError("Admin with the given username already exists");
+    if (!existingAdmin) throw new BadRequestError("Admin with the given username doesn't exist");
     // hash the password
     const hashedPassword = await Password.toHash(password);
 
     // create a new admin
-    const newAdmin = await prisma.admin.create({
-      data: {
-        username,
-        password: hashedPassword,
-        role,
-      },
+    const updatedAdmin = await prisma.admin.update({
+      where: { username },
+      data: { password: hashedPassword, role },
       select: {
         id: true,
         username: true,
@@ -54,8 +51,11 @@ router.post(
       },
     });
 
-    res.status(201).send(newAdmin);
+    res.status(201).send({
+      message: "Admin updated successfully",
+      updatedAdmin,
+    });
   },
 );
 
-export { router as createAdminRouter };
+export { router as updateAdminRouter };
