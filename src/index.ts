@@ -1,11 +1,14 @@
+import { PrismaClient } from "@prisma/client";
 import { app } from "./app";
 
+const prisma = new PrismaClient();
+
 const start = async () => {
-  if (!process.env.JWT_KEY) throw new Error("JWT_KEY must be defined");
+  if (!process.env.JWT_KEY) throw new Error("JWT key missing");
 
   try {
-    await mongoose.connect("mongodb://auth-mongo-srv:27017/auth");
-    console.log("mongo connected");
+    prisma.$connect();
+    console.log("DB connected");
   } catch (error) {
     console.error(error);
   }
@@ -15,4 +18,12 @@ const start = async () => {
   });
 };
 
-start();
+start()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });
